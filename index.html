@@ -141,34 +141,33 @@
 
    async function predict() {
 const prediction = await model.predict(webcam.canvas);
+  
+  // Find highest confidence class
+  let maxProb = 0;
+  let gesture = null;
 
+  for (let i = 0; i < prediction.length; i++) {
+    if (prediction[i].probability > maxProb) {
+      maxProb = prediction[i].probability;
+      gesture = prediction[i].className;
+    }
+  }
 
-let highestClass = null;
-let highestProb = 0;
-
-
-for (let i = 0; i < prediction.length; i++) {
-if (prediction[i].probability > highestProb) {
-highestProb = prediction[i].probability;
-highestClass = prediction[i].className;
-}
-labelContainer.childNodes[i].innerHTML = prediction[i].className + ": " + prediction[i].probability.toFixed(2);
-}
-
-// Only trigger when gesture changes
+  // Only trigger when gesture changes
 // Cooldown: only trigger every 2 seconds
 const now = Date.now();
 if (highestProb > 0.90 && highestClass !== lastGesture && now - lastTriggerTime > 2000) {
-lastGesture = highestClass;
+lastGesture = gesture;
 lastTriggerTime = now;
 
 
-if (highestClass === "MotQuote") showQuote();
-if (highestClass === "Backcolor") changeBackground();
-if (highestClass === "Showimg") toggleVideo();
-if (highestClass === "Fist") showRandomImage();
+if (gesture === "MotQuote") showQuote();
+if (gesture === "Backcolor") changeBackground();
+if (gesture === "Showimg") toggleVideo();
+if (gesture === "Fist") showRandomImage();
 }
 }
+
 </script>
 
 </body>
