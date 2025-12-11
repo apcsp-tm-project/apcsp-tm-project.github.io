@@ -155,10 +155,12 @@ highestClass = prediction[i].className;
 labelContainer.childNodes[i].innerHTML = prediction[i].className + ": " + prediction[i].probability.toFixed(2);
 }
 
-
 // Only trigger when gesture changes
-if (highestProb > 0.90 && highestClass !== lastGesture) {
+// Cooldown: only trigger every 2 seconds
+const now = Date.now();
+if (highestProb > 0.90 && highestClass !== lastGesture && now - lastTriggerTime > 2000) {
 lastGesture = highestClass;
+lastTriggerTime = now;
 
 
 if (highestClass === "MotQuote") showQuote();
