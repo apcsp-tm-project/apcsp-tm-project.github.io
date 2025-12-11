@@ -1,59 +1,166 @@
-<div>Teachable Machine Image Model</div>
-<button type="button" onclick="init()">Start</button>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gesture-Controlled Interactive Webpage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            transition: background-color 0.5s ease;
+        }
+        header {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        #instructions {
+            margin: 20px auto;
+            max-width: 600px;
+            text-align: left;
+        }
+        #quoteBox {
+            margin-top: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        #randomImage {
+            margin-top: 20px;
+            max-width: 250px;
+            display: none;
+        }
+        #videoPlayer {
+            margin-top: 20px;
+            width: 320px;
+            height: 240px;
+        }
+    </style>
+</head>
+<body>
+
+<header>Hand Gesture Interactive Demo</header>
+
+<section id="intro">
+    <p>
+        This webpage demonstrates how machine learning and hand gestures can be used to control interactive elements.
+        It is designed for students, educators, and developers interested in AI, computer vision, and accessible user interaction.
+        Users who benefit include people wanting hands-free controls, classrooms experimenting with ML, and beginners exploring Teachable Machine.
+    </p>
+</section>
+
+<section id="instructions">
+    <h2>How to Use</h2>
+    <ul>
+        <li><strong>👍 Thumbs Up:</strong> Show a motivational quote</li>
+        <li><strong>✌️ Peace Sign:</strong> Change the background color</li>
+        <li><strong>✋ Open Palm:</strong> Play/Pause the video</li>
+        <li><strong>👊 Fist:</strong> Show a random image or fact</li>
+    </ul>
+</section>
+
+<button type="button" onclick="init()">Start Webcam</button>
 <div id="webcam-container"></div>
 <div id="label-container"></div>
+
+<div id="quoteBox"></div>
+<img id="randomImage" />
+
+<video id="videoPlayer" controls>
+    <source src="sample.mp4" type="video/mp4" />
+</video>
+
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
-<script type="text/javascript">
-    // More API functions here:
-    // https://github.com/googlecreativelab/teachablemachine-community/tree/master/libraries/image
 
-    // the link to your model provided by Teachable Machine export panel
+<script>
     const URL = "./my_model/";
-
     let model, webcam, labelContainer, maxPredictions;
 
-    // Load the image model and setup the webcam
+    const quotes = [
+        "Believe in yourself!",
+        "You are capable of amazing things!",
+        "Keep going, you're doing great!",
+        "Every day is a new opportunity!"
+    ];
+
+    const images = [
+        "img1.jpg",
+        "img2.jpg",
+        "img3.jpg"
+    ];
+
     async function init() {
         const modelURL = URL + "model.json";
         const metadataURL = URL + "metadata.json";
 
-        // load the model and metadata
-        // Refer to tmImage.loadFromFiles() in the API to support files from a file picker
-        // or files from your local hard drive
-        // Note: the pose library adds "tmImage" object to your window (window.tmImage)
         model = await tmImage.load(modelURL, metadataURL);
         maxPredictions = model.getTotalClasses();
 
-        // Convenience function to setup a webcam
-        const flip = true; // whether to flip the webcam
-        webcam = new tmImage.Webcam(200, 200, flip); // width, height, flip
-        await webcam.setup(); // request access to the webcam
+        const flip = true;
+        webcam = new tmImage.Webcam(200, 200, flip);
+        await webcam.setup();
         await webcam.play();
         window.requestAnimationFrame(loop);
 
-        // append elements to the DOM
         document.getElementById("webcam-container").appendChild(webcam.canvas);
         labelContainer = document.getElementById("label-container");
-        for (let i = 0; i < maxPredictions; i++) { // and class labels
+        for (let i = 0; i < maxPredictions; i++) {
             labelContainer.appendChild(document.createElement("div"));
         }
     }
 
     async function loop() {
-        webcam.update(); // update the webcam frame
+        webcam.update();
         await predict();
         window.requestAnimationFrame(loop);
     }
 
-    // run the webcam image through the image model
+    function changeBackground() {
+        const colors = ["#f8e8ff", "#e0f7ff", "#ffe9e0", "#e8ffe2", "#fffad1"];
+        document.body.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    function showQuote() {
+        const q = quotes[Math.floor(Math.random() * quotes.length)];
+        document.getElementById("quoteBox").innerText = q;
+    }
+
+    function toggleVideo() {
+        const video = document.getElementById("videoPlayer");
+        if (video.paused) video.play();
+        else video.pause();
+    }
+
+    function showRandomImage() {
+        const img = document.getElementById("randomImage");
+        img.src = images[Math.floor(Math.random() * images.length)];
+        img.style.display = "block";
+    }
+
     async function predict() {
-        // predict can take in an image, video or canvas html element
         const prediction = await model.predict(webcam.canvas);
-        for (let i = 0; i < maxPredictions; i++) {
-            const classPrediction =
-                prediction[i].className + ": " + prediction[i].probability.toFixed(2);
-            labelContainer.childNodes[i].innerHTML = classPrediction;
+
+        let highestClass = null;
+        let highestProb = 0;
+
+        for (let i = 0; i < prediction.length; i++) {
+            if (prediction[i].probability > highestProb) {
+                highestProb = prediction[i].probability;
+                highestClass = prediction[i].className;
+            }
+            labelContainer.childNodes[i].innerHTML = prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+        }
+
+        if (highestProb > 0.90) {
+            if (highestClass === "Thumbs Up") showQuote();
+            if (highestClass === "Peace") changeBackground();
+            if (highestClass === "Open Palm") toggleVideo();
+            if (highestClass === "Fist") showRandomImage();
         }
     }
 </script>
+
+</body>
+</html>
