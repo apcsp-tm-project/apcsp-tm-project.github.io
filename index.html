@@ -139,27 +139,34 @@
         img.style.display = "block";
     }
 
-    async function predict() {
-        const prediction = await model.predict(webcam.canvas);
+   async function predict() {
+const prediction = await model.predict(webcam.canvas);
 
-        let highestClass = null;
-        let highestProb = 0;
 
-        for (let i = 0; i < prediction.length; i++) {
-            if (prediction[i].probability > highestProb) {
-                highestProb = prediction[i].probability;
-                highestClass = prediction[i].className;
-            }
-            labelContainer.childNodes[i].innerHTML = prediction[i].className + ": " + prediction[i].probability.toFixed(2);
-        }
+let highestClass = null;
+let highestProb = 0;
 
-        if (highestProb > 0.90) {
-            if (highestClass === "MotQuote") showQuote();
-            if (highestClass === "BackColor") changeBackground();
-            if (highestClass === "Playvid") toggleVideo();
-            if (highestClass === "Showimg") showRandomImage();
-        }
-    }
+
+for (let i = 0; i < prediction.length; i++) {
+if (prediction[i].probability > highestProb) {
+highestProb = prediction[i].probability;
+highestClass = prediction[i].className;
+}
+labelContainer.childNodes[i].innerHTML = prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+}
+
+
+// Only trigger when gesture changes
+if (highestProb > 0.90 && highestClass !== lastGesture) {
+lastGesture = highestClass;
+
+
+if (highestClass === "MotQuote") showQuote();
+if (highestClass === "Backcolor") changeBackground();
+if (highestClass === "Showimg") toggleVideo();
+if (highestClass === "Fist") showRandomImage();
+}
+}
 </script>
 
 </body>
