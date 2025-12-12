@@ -139,31 +139,27 @@
         img.style.display = "block";
     }
 
- async function predict() {
-      const prediction = await model.predict(webcam.canvas);
+    async function predict() {
+        const prediction = await model.predict(webcam.canvas);
 
-      let maxProb = 0;
-      let gesture = null;
+        let highestClass = null;
+        let highestProb = 0;
 
-      for (let i = 0; i < prediction.length; i++) {
-        if (prediction[i].probability > maxProb) {
-          maxProb = prediction[i].probability;
-          gesture = prediction[i].className;
+        for (let i = 0; i < prediction.length; i++) {
+            if (prediction[i].probability > highestProb) {
+                highestProb = prediction[i].probability;
+                highestClass = prediction[i].className;
+            }
+            labelContainer.childNodes[i].innerHTML = prediction[i].className + ": " + prediction[i].probability.toFixed(2);
         }
-      }
 
-      // Only react if HIGH confidence and NEW gesture
-      if (maxProb > 0.85 && gesture !== lastGesture) {
-        lastGesture = gesture;
-        console.log("New gesture:", gesture);
-
-        if (gesture === "MotQuote") showQuote();
-        if (gesture === "Backcolor") changeBackground();
-        if (gesture === "Showimg") toggleVideo();
-        if (gesture === "Fist") showRandomImage();
-      }
+        if (highestProb > 0.90) {
+            if (highestClass === "MotQuote") showQuote();
+            if (highestClass === "BackColor") changeBackground();
+            if (highestClass === "Playvid") toggleVideo();
+            if (highestClass === "Showimg") showRandomImage();
+        }
     }
-
 </script>
 
 </body>
