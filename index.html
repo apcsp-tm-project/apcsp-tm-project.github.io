@@ -77,6 +77,7 @@
 <script>
     const URL = "./my_model/";
     let model, webcam, labelContainer, maxPredictions;
+    let webcamstarted = false;
     // Gesture cooldown
 
  let lastTriggerTime = 0;
@@ -96,6 +97,11 @@
     ];
 
     async function init() {
+        webcamstarted = true;
+
+        if (webcamstarted)
+            return;
+        
         const modelURL = URL + "model.json";
         const metadataURL = URL + "metadata.json";
 
