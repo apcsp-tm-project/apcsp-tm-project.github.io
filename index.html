@@ -143,39 +143,50 @@
         img.style.display = "block";
     }
 
-async function predict() {
-    const prediction = await model.predict(webcam.canvas);
+let lastGesture = "Nothing";   // keeps track of previous gesture
+let cooldown = false;          // prevents rapid re-triggering
 
-    let highestClass = null;
-    let highestProb = 0;
+async function predict() {  
+  const prediction = await model.predict(webcam.canvas);
 
-    for (let i = 0; i < prediction.length; i++) {
-        if (prediction[i].probability > highestProb) {
-            highestProb = prediction[i].probability;
-            highestClass = prediction[i].className;
-        }
-        labelContainer.childNodes[i].innerHTML =
-            prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+  let highestClass = null;
+  let highestProb = 0;
+
+  // find highest class
+  for (let i = 0; i < prediction.length; i++) {
+    if (prediction[i].probability > highestProb) {
+      highestProb = prediction[i].probability;
+      highestClass = prediction[i].className;
     }
 
-    // Cooldown: prevent constant firing
-    const now = Date.now();
+    // update UI
+    labelContainer.childNodes[i].innerHTML =
+      `${prediction[i].className}: ${prediction[i].probability.toFixed(2)}`;
+  }
 
-    if (
-        highestProb > 0.90 &&
-        highestClass !== lastGesture &&
-        now - lastTriggerTime > COOLDOWN
-    ) {
-        lastGesture = highestClass;
-        lastTriggerTime = now;
+  // must be confident AND not in cooldown
+  if (highestProb > 0.90 && !cooldown) {
+    if (highestClass !== lastGesture && highestClass !== "Nothing") {
+      // A new gesture was detected → fire event once
+      console.log("New gesture:", highestClass);
 
-        console.log("Gesture Activated:", highestClass);
+      if (highestClass === "MotQuote") showQuote();
+      if (highestClass === "BackColor") changeBackground();
+      if (highestClass === "Playvid") toggleVideo();
+      if (highestClass === "Showimg") showRandomImage();
 
-        if (highestClass === "MotQuote") showQuote();
-        if (highestClass === "Backcolor") changeBackground();
-        if (highestClass === "Playvid") toggleVideo();
-        if (highestClass === "Showimg") showRandomImage();
+      lastGesture = highestClass;
+      cooldown = true;
+
+      // wait before allowing another trigger
+      setTimeout(() => cooldown = false, 1500);
     }
+
+    // update lastGesture if it's valid
+    if (highestClass === "Nothing") {
+      lastGesture = "Nothing";
+    }
+  }
 }
 </script>
 
